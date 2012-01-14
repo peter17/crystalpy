@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
-"""Script for generating crystal meshes."""
+"""Script for generating crystal meshes and images."""
 
 from __future__ import division
+import pysvg
+from pysvg.core import *
+from pysvg.structure import *
+from pysvg.shape import *
 
 __copyright__ = "© 2012 Peter Potrowl <peter017@gmail.com>"
 
@@ -240,7 +244,67 @@ class FullCircle:
         self.lines = [circle_top, circle_bottom]
 
 
-class Mesh:
+class Matrix:
+    def __init__(self,
+                 dim_x,
+                 dim_y,
+                 pos_x,
+                 pos_y,
+                 pos_z,
+                 el_size,
+                 periodicity,
+                 tag):
+        self.dim_x = dim_x
+        self.dim_y = dim_y
+        self.pos_x = pos_x
+        self.pos_y = pos_y
+        self.pos_z = pos_z
+        self.el_size = el_size
+        self.periodicity = periodicity
+        self.tag = tag
+
+    def image(self):
+        return pysvg.shape.rect(self.pos_x - self.dim_x / 2,
+                                self.pos_y - self.dim_y / 2,
+                                self.dim_x,
+                                self.dim_y,
+                                stroke='black',
+                                fill='white')
+
+    def mesh(self):
+        return Rectangle(self.dim_x, self.dim_y,
+                         self.pos_x, self.pos_y, self.pos_z,
+                         self.el_size, self.periodicity)
+
+
+class Inclusion:
+    instances = []
+
+    def __init__(self,
+                 type,
+                 pos_x,
+                 pos_y,
+                 pos_z):
+        self.type = type
+        self.pos_x = pos_x
+        self.pos_y = pos_y
+        self.pos_z = pos_z
+        Inclusion.instances.append(self)
+
+    def image(self):
+        return pysvg.shape.circle(self.pos_x,
+                                  self.pos_y,
+                                  self.type.radius,
+                                  stroke='black',
+                                  fill=self.type.color)
+
+    def mesh(self):
+        return FullCircle(self.type.radius,
+                          self.pos_x, self.pos_y, self.pos_z,
+                          self.type.el_size)
+
+
+class Crystal:
     def __init__(self,
                  dim_x,
                  dim_y,
@@ -252,6 +316,7 @@ class Mesh:
                  space_y,
                  pos_x,
                  pos_y,
+                 crystal_shape,  # square or hexa
                  el_size_bulk,
                  bulk_tag,
                  inclusion_tag,
@@ -265,30 +330,46 @@ class Mesh:
         if map is not None:
             assert len(map) == nb_y, "Wrong map size!"
             assert len(map[0]) == nb_x, "Wrong map size!"
+        assert crystal_shape in ['square', 'hexa'], "Wrong crystal type!"
 
-        main_rectangle = Rectangle(dim_x, dim_y, 0, 0, 0,
-                                   el_size_bulk, periodicity)
+        self.matrix = Matrix(dim_x, dim_y, 0, 0, 0,
+                             el_size_bulk, periodicity, bulk_tag)
 
-        inclusions_lines_all = []
-        inclusions_lines_by_tag = {}
         for i in range(nb_x):
             for j in range(nb_y):
-                x = pos_x + i * space_x
-                y = pos_y + j * space_y
+                if crystal_shape == 'hexa' and j % 2 == 1:
+                    x = pos_x + i * space_x + space_x / 2
+                    y = pos_y + j * space_y
+                else:
+                    x = pos_x + i * space_x
+                    y = pos_y + j * space_y
                 type_id = 0 if map is None else map[j][i]
                 type = inclusion_types[type_id]
                 if type is not None:
-                    inclusion = FullCircle(type.radius, x, y, 0, type.el_size)
-                    for line in inclusion.lines:
-                        inclusions_lines_all.append(line)
-                    if type.type != 'hole':
-                        if type.tag not in inclusions_lines_by_tag.keys():
-                            inclusions_lines_by_tag[type.tag] = []
-                        inclusions_lines_by_tag[type.tag].append(inclusion.lines)
+                    Inclusion(type, x, y, 0)
 
-        loop = LineLoop(main_rectangle.lines, inclusions_lines_all)
+    def image(self, filename):
+        mysvg = pysvg.structure.svg("My periodic structure")
+        mysvg.addElement(self.matrix.image())
+        for inclusion in Inclusion.instances:
+            mysvg.addElement(inclusion.image())
+        mysvg.save(filename)
+
+    def mesh(self):
+        inclusions_lines_all = []
+        inclusions_lines_by_tag = {}
+
+        for inclusion in Inclusion.instances:
+            for line in inclusion.mesh().lines:
+                inclusions_lines_all.append(line)
+            if inclusion.type.type != 'hole':
+                if inclusion.type.tag not in inclusions_lines_by_tag.keys():
+                    inclusions_lines_by_tag[inclusion.type.tag] = []
+                inclusions_lines_by_tag[inclusion.type.tag].append(inclusion.mesh().lines)
+
+        loop = LineLoop(self.matrix.mesh().lines, inclusions_lines_all)
         surface = PlaneSurface(loop)
-        PhysicalSurface([surface], bulk_tag)
+        PhysicalSurface([surface], self.matrix.tag)
 
         for tag, inclusion_lines in inclusions_lines_by_tag.iteritems():
             inclusion_surfaces = []
@@ -297,9 +378,7 @@ class Mesh:
                 inclusion_surfaces.append(PlaneSurface(loop))
             PhysicalSurface(inclusion_surfaces, tag)
 
-    def __repr__(self):
-        result = ''
-        result += Value.print_all() + '\n'
+        result = Value.print_all() + '\n'
         result += Point.print_all() + '\n'
         result += Line.print_all() + '\n'
         result += PhysicalEntity.print_all()
@@ -311,7 +390,8 @@ class InclusionType:
                  type,
                  radius,
                  el_size,
-                 tag=None):
+                 tag=None,
+                 color='lightgrey'):
         """
         @param type: 'inclusion' (matter) or 'hole' (void)
         @param tag: what to tag in the mesh for those inclusions
@@ -320,3 +400,4 @@ class InclusionType:
         self.tag = tag
         self.radius = radius
         self.el_size = el_size
+        self.color = color

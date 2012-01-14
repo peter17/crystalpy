@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Script for generating crystal meshes."""
+"""Script for generating crystal meshes and images."""
 
 from __future__ import division
-from generator import InclusionType, Mesh, Value
+from generator import Crystal, InclusionType, Value
 
 __copyright__ = "© 2012 Peter Potrowl <peter017@gmail.com>"
 
@@ -23,31 +23,38 @@ along with this program.  If not, see U{http://www.gnu.org/licenses/}.
 
 map_simple = [[1, 1],
               [1, 2]]
-size_inclusions = Value('size_inclusions', 250)
+size_bulk = Value('size_bulk', 250)
 holes = InclusionType('hole',
-                      radius = 90,
-                      el_size = Value('size_holes', 300))
+                  radius = 100,
+                  el_size = Value('size_holes', 300),
+                  color = 'lightgrey')
 type1 = InclusionType('inclusion',
                       tag = 'mat2',
                       radius = 100,
-                      el_size = size_inclusions)
-kwargs = {'dim_x': 500,
-          'dim_y': 500,
-          'dim_z': 0,
-          'periodicity': (False, True, False),
-          'nb_x': 2,
-          'nb_y': 2,
-          'space_x': 250,
-          'space_y': 250,
-          'pos_x': -125,
-          'pos_y': -125,
-          'el_size_bulk': Value('size_bulk', 150),
-          'bulk_tag': 'mat1',
-          'inclusion_tag': 'mat2',
-          'map': map_simple,
-          'inclusion_types': [None, type1, holes]}
-my_crystal = Mesh(**kwargs)
+                      el_size = Value('size_inclusions', 250),
+                      color = 'grey')
+simple_2d = \
+    {'dim_x': 500,
+     'dim_y': 500,
+     'dim_z': 0,
+     'periodicity': (False, False, False),
+     'nb_x': 2,
+     'nb_y': 2,
+     'space_x': 250,
+     'space_y': 250,
+     'pos_x': -125,
+     'pos_y': -125,
+     'crystal_shape': 'square',
+     'el_size_bulk': size_bulk,
+     'bulk_tag': 'mat1',
+     'inclusion_tag': 'mat2',
+     'map': map_simple,
+     'inclusion_types': [None, type1, holes]}
+my_crystal = Crystal(**simple_2d)
+my_mesh = my_crystal.mesh()
 file = open('MyCrystal.geo', 'w')
-file.write("%s" % my_crystal)
+file.write(my_mesh)
 file.close()
 print 'Geo saved'
+my_crystal.image('MyCrystal.svg')
+print 'SVG saved'
