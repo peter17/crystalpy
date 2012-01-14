@@ -1,0 +1,47 @@
+size_inclusions = 250;
+size_holes = 300;
+size_bulk = 150;
+
+Point(1) = {-250.0, 250.0, 0, size_bulk};
+Point(2) = {-250.0, -250.0, 0, size_bulk};
+Point(3) = {250.0, 250.0, 0, size_bulk};
+Point(4) = {250.0, -250.0, 0, size_bulk};
+Point(5) = {-125, -125, 0, size_inclusions};
+Point(6) = {-225, -125, 0, size_inclusions};
+Point(7) = {-25, -125, 0, size_inclusions};
+Point(8) = {-125, 125, 0, size_inclusions};
+Point(9) = {-225, 125, 0, size_inclusions};
+Point(10) = {-25, 125, 0, size_inclusions};
+Point(11) = {125, -125, 0, size_inclusions};
+Point(12) = {25, -125, 0, size_inclusions};
+Point(13) = {225, -125, 0, size_inclusions};
+Point(14) = {125, 125, 0, size_holes};
+Point(15) = {35, 125, 0, size_holes};
+Point(16) = {215, 125, 0, size_holes};
+
+Line(1) = {2, 1};
+Line(2) = {1, 3};
+Line(3) = {3, 4};
+Line(4) = {4, 2};
+Periodic Line(4) = {-2};
+Circle(6) = {6, 5, 7};
+Circle(7) = {7, 5, 6};
+Circle(8) = {9, 8, 10};
+Circle(9) = {10, 8, 9};
+Circle(10) = {12, 11, 13};
+Circle(11) = {13, 11, 12};
+Circle(12) = {15, 14, 16};
+Circle(13) = {16, 14, 15};
+Line Loop(14) = {1, 2, 3, 4, -6, -7, -8, -9, -10, -11, -12, -13};
+Plane Surface(15) = {14};
+Line Loop(16) = {6, 7};
+Plane Surface(17) = {16};
+Line Loop(18) = {8, 9};
+Plane Surface(19) = {18};
+Line Loop(20) = {10, 11};
+Plane Surface(21) = {20};
+
+Physical Line("minus_y") = {4};
+Physical Line("plus_y") = {2};
+Physical Surface("mat1") = {15};
+Physical Surface("mat2") = {17, 19, 21};
