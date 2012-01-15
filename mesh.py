@@ -36,7 +36,7 @@ type1 = InclusionType('inclusion',
 simple_2d = \
     {'dim_x': 500,
      'dim_y': 500,
-     'dim_z': 0,
+     'dim_z': 300,
      'periodicity': (False, False, False),
      'nb_x': 2,
      'nb_y': 2,

@@ -140,6 +140,30 @@ class PlaneSurface:
                 % (self.id, self.loop.id))
 
 
+class RuledSurface:
+    def __init__(self, loop):
+        self.loop = loop
+
+        Line.instances.append(self)
+        self.id = len(Line.instances)
+
+    def __repr__(self):
+        return ("Ruled Surface(%s) = {%s};\n"
+                % (self.id, self.loop.id))
+
+
+class Volume:
+    def __init__(self, loop):
+        self.loop = loop
+
+        Line.instances.append(self)
+        self.id = len(Line.instances)
+
+    def __repr__(self):
+        return ("Volume(%s) = {%s};\n"
+                % (self.id, self.loop.id))
+
+
 class PhysicalEntity:
     instances = []
 
@@ -174,6 +198,18 @@ class PhysicalSurface:
     def __repr__(self):
         return ('Physical Surface("%s") = {%s};\n'
                 % (self.name, self.surfaces))
+
+
+class PhysicalVolume:
+    def __init__(self, volumes, name):
+        self.volumes = ', '.join([format(volume.id) for volume in volumes])
+        self.name = name
+
+        PhysicalEntity.instances.append(self)
+
+    def __repr__(self):
+        return ('Physical Volume("%s") = {%s};\n'
+                % (self.name, self.volumes))
 
 
 class Rectangle():
@@ -244,10 +280,149 @@ class FullCircle:
         self.lines = [circle_top, circle_bottom]
 
 
+class SurfaceLoop:
+    def __init__(self, pos_lines, neg_lines=[]):
+        self.pos_lines_list = ', '.join(["%r" % line.id for line in pos_lines])
+        self.neg_lines_list = ', '.join(["-%r" % line.id for line in neg_lines])
+        if neg_lines != []:
+            self.neg_lines_list = ', ' + self.neg_lines_list
+
+        Line.instances.append(self)
+        self.id = len(Line.instances)
+
+    def __repr__(self):
+        return ("Surface Loop(%s) = {%s%s};\n"
+                % (self.id, self.pos_lines_list, self.neg_lines_list))
+
+
+class Cylinder:
+    def __init__(self,
+                 radius,
+                 pos_x,
+                 pos_y,
+                 dim_z,
+                 el_size):
+
+        self.el_size = el_size
+
+        pt_c_bottom = Point(pos_x, pos_y, 0, el_size)
+        pt_l_bottom = Point(pos_x - radius, pos_y, 0, el_size)
+        pt_r_bottom = Point(pos_x + radius, pos_y, 0, el_size)
+
+        pt_c_top = Point(pos_x, pos_y, dim_z, el_size)
+        pt_l_top = Point(pos_x - radius, pos_y, dim_z, el_size)
+        pt_r_top = Point(pos_x + radius, pos_y, dim_z, el_size)
+
+        circle_1_top = Circle(pt_l_top, pt_c_top, pt_r_top)
+        circle_1_bottom = Circle(pt_l_bottom, pt_c_bottom, pt_r_bottom)
+
+        circle_2_top = Circle(pt_r_top, pt_c_top, pt_l_top)
+        circle_2_bottom = Circle(pt_r_bottom, pt_c_bottom, pt_l_bottom)
+
+        line1 = StraightLine(pt_l_bottom, pt_l_top)
+        line2 = StraightLine(pt_r_bottom, pt_r_top)
+
+        loop1 = LineLoop([circle_1_bottom, line2], [circle_1_top, line1])
+        loop2 = LineLoop([circle_2_bottom, line1], [circle_2_top, line2])
+
+        self.surfaces = []
+
+        self.surfaces.append(RuledSurface(loop1))
+        self.surfaces.append(RuledSurface(loop2))
+
+        self.lines_top = [circle_1_top, circle_2_top]
+        self.lines_bottom = [circle_1_bottom, circle_2_bottom]
+        self.lines = [line1, line2]
+
+
+class Cuboid():
+    def __init__(self,
+                 dim_x,
+                 dim_y,
+                 dim_z,
+                 pos_x,
+                 pos_y,
+                 pos_z,
+                 el_size,
+                 periodicity):
+
+        self.el_size = el_size
+
+        pt_tl_bottom = Point(pos_x - dim_x / 2, pos_y + dim_y / 2, pos_z, el_size)
+        pt_bl_bottom = Point(pos_x - dim_x / 2, pos_y - dim_y / 2, pos_z, el_size)
+        pt_tr_bottom = Point(pos_x + dim_x / 2, pos_y + dim_y / 2, pos_z, el_size)
+        pt_br_bottom = Point(pos_x + dim_x / 2, pos_y - dim_y / 2, pos_z, el_size)
+
+        pt_tl_top = Point(pos_x - dim_x / 2, pos_y + dim_y / 2, pos_z + dim_z, el_size)
+        pt_bl_top = Point(pos_x - dim_x / 2, pos_y - dim_y / 2, pos_z + dim_z, el_size)
+        pt_tr_top = Point(pos_x + dim_x / 2, pos_y + dim_y / 2, pos_z + dim_z, el_size)
+        pt_br_top = Point(pos_x + dim_x / 2, pos_y - dim_y / 2, pos_z + dim_z, el_size)
+
+        line_left_bottom = StraightLine(pt_bl_bottom, pt_tl_bottom)
+        line_top_bottom = StraightLine(pt_tl_bottom, pt_tr_bottom)
+        line_right_bottom = StraightLine(pt_tr_bottom, pt_br_bottom)
+        line_bottom_bottom = StraightLine(pt_br_bottom, pt_bl_bottom)
+
+        line_left_top = StraightLine(pt_bl_top, pt_tl_top)
+        line_top_top = StraightLine(pt_tl_top, pt_tr_top)
+        line_right_top = StraightLine(pt_tr_top, pt_br_top)
+        line_bottom_top = StraightLine(pt_br_top, pt_bl_top)
+
+        line_bottom_left = StraightLine(pt_bl_bottom, pt_bl_top)
+        line_top_left = StraightLine(pt_tl_bottom, pt_tl_top)
+        line_top_right = StraightLine(pt_tr_bottom, pt_tr_top)
+        line_bottom_right = StraightLine(pt_br_bottom, pt_br_top)
+
+        self.lines_top = [line_left_top, line_top_top,
+                          line_right_top, line_bottom_top]
+
+        self.lines_bottom = [line_left_bottom, line_top_bottom,
+                             line_right_bottom, line_bottom_bottom]
+
+        self.lines = [line_bottom_left, line_top_left,
+                      line_top_right, line_bottom_right]
+
+        loop1 = LineLoop([line_bottom_left, line_left_top],
+                         [line_top_left, line_left_bottom])
+        loop2 = LineLoop([line_bottom_right, line_bottom_top],
+                         [line_bottom_left, line_bottom_bottom])
+        loop3 = LineLoop([line_top_right, line_right_top],
+                         [line_bottom_right, line_right_bottom])
+        loop4 = LineLoop([line_top_bottom, line_top_right],
+                         [line_top_top, line_top_left])
+
+        self.surfaces = []
+
+        self.surfaces.append(PlaneSurface(loop1))
+        self.surfaces.append(PlaneSurface(loop2))
+        self.surfaces.append(PlaneSurface(loop3))
+        self.surfaces.append(PlaneSurface(loop4))
+
+        if periodicity[0]:
+            PeriodicLine(line_left_bottom, line_right_bottom)
+            PhysicalLine(line_left_bottom, 'minus_x_bottom')
+            PhysicalLine(line_right_bottom, 'plus_x_bottom')
+            PeriodicLine(line_left_top, line_right_top)
+            PhysicalLine(line_left_top, 'minus_x_top')
+            PhysicalLine(line_right_top, 'plus_x_top')
+            PeriodicLine(line_bottom_left, line_bottom_right)
+            PeriodicLine(line_top_left, line_top_right)
+        if periodicity[1]:
+            PeriodicLine(line_bottom_bottom, line_top_bottom)
+            PhysicalLine(line_bottom_bottom, 'minus_y_bottom')
+            PhysicalLine(line_top_bottom, 'plus_y_bottom')
+            PeriodicLine(line_bottom_top, line_top_top)
+            PhysicalLine(line_bottom_top, 'minus_y_top')
+            PhysicalLine(line_top_top, 'plus_y_top')
+            PeriodicLine(line_bottom_left, line_top_left)
+            PeriodicLine(line_bottom_right, line_top_right)
+
+
 class Matrix:
     def __init__(self,
                  dim_x,
                  dim_y,
+                 dim_z,
                  pos_x,
                  pos_y,
                  pos_z,
@@ -256,6 +431,7 @@ class Matrix:
                  tag):
         self.dim_x = dim_x
         self.dim_y = dim_y
+        self.dim_z = dim_z
         self.pos_x = pos_x
         self.pos_y = pos_y
         self.pos_z = pos_z
@@ -272,9 +448,14 @@ class Matrix:
                                 fill='white')
 
     def mesh(self):
-        return Rectangle(self.dim_x, self.dim_y,
-                         self.pos_x, self.pos_y, self.pos_z,
-                         self.el_size, self.periodicity)
+        if self.dim_z == 0:
+            return Rectangle(self.dim_x, self.dim_y,
+                             self.pos_x, self.pos_y, self.pos_z,
+                             self.el_size, self.periodicity)
+        else:
+            return Cuboid(self.dim_x, self.dim_y, self.dim_z,
+                          self.pos_x, self.pos_y, self.pos_z,
+                          self.el_size, self.periodicity)
 
 
 class Inclusion:
@@ -284,11 +465,11 @@ class Inclusion:
                  type,
                  pos_x,
                  pos_y,
-                 pos_z):
+                 dim_z):
         self.type = type
         self.pos_x = pos_x
         self.pos_y = pos_y
-        self.pos_z = pos_z
+        self.dim_z = dim_z
         Inclusion.instances.append(self)
 
     def image(self):
@@ -299,9 +480,14 @@ class Inclusion:
                                   fill=self.type.color)
 
     def mesh(self):
-        return FullCircle(self.type.radius,
-                          self.pos_x, self.pos_y, self.pos_z,
-                          self.type.el_size)
+        if self.dim_z == 0:
+            return FullCircle(self.type.radius,
+                              self.pos_x, self.pos_y, 0,
+                              self.type.el_size)
+        else:
+            return Cylinder(self.type.radius,
+                              self.pos_x, self.pos_y, self.dim_z,
+                              self.type.el_size)
 
 
 class Crystal:
@@ -326,13 +512,12 @@ class Crystal:
         self.dim_y = dim_y
         self.dim_z = dim_z
 
-        assert dim_z == 0, '3D meshes are not supported yet'
         if map is not None:
             assert len(map) == nb_y, "Wrong map size!"
             assert len(map[0]) == nb_x, "Wrong map size!"
         assert crystal_shape in ['square', 'hexa'], "Wrong crystal type!"
 
-        self.matrix = Matrix(dim_x, dim_y, 0, 0, 0,
+        self.matrix = Matrix(dim_x, dim_y, dim_z, 0, 0, 0,
                              el_size_bulk, periodicity, bulk_tag)
 
         for i in range(nb_x):
@@ -346,7 +531,7 @@ class Crystal:
                 type_id = 0 if map is None else map[j][i]
                 type = inclusion_types[type_id]
                 if type is not None:
-                    Inclusion(type, x, y, 0)
+                    Inclusion(type, x, y, dim_z)
 
     def image(self, filename):
         mysvg = pysvg.structure.svg("My periodic structure")
@@ -355,7 +540,7 @@ class Crystal:
             mysvg.addElement(inclusion.image())
         mysvg.save(filename)
 
-    def mesh(self):
+    def mesh_2d(self):
         inclusions_lines_all = []
         inclusions_lines_by_tag = {}
 
@@ -377,6 +562,53 @@ class Crystal:
                 loop = LineLoop(lines)
                 inclusion_surfaces.append(PlaneSurface(loop))
             PhysicalSurface(inclusion_surfaces, tag)
+
+    def mesh_3d(self):
+        inclusions_lines_all_top = []
+        inclusions_lines_all_bottom = []
+        inclusions_by_tag = {}
+        inclusion_surfaces = []
+
+        for inclusion in Inclusion.instances:
+            inclusion_mesh = inclusion.mesh()
+            for line in inclusion_mesh.lines_top:
+                inclusions_lines_all_top.append(line)
+            for line in inclusion_mesh.lines_bottom:
+                inclusions_lines_all_bottom.append(line)
+            if inclusion.type.type != 'hole':
+                if inclusion.type.tag not in inclusions_by_tag.keys():
+                    inclusions_by_tag[inclusion.type.tag] = []
+                inclusions_by_tag[inclusion.type.tag].append(inclusion_mesh)
+            inclusion_surfaces.extend(inclusion_mesh.surfaces)
+
+        matrix_mesh = self.matrix.mesh()
+        loop_top = LineLoop(matrix_mesh.lines_top, inclusions_lines_all_top)
+        loop_bottom = LineLoop(matrix_mesh.lines_bottom, inclusions_lines_all_bottom)
+        surface_top = PlaneSurface(loop_top)
+        surface_bottom = PlaneSurface(loop_bottom)
+        matrix_mesh.surfaces.append(surface_top)
+        matrix_mesh.surfaces.append(surface_bottom)
+        surface_loop = SurfaceLoop(matrix_mesh.surfaces, inclusion_surfaces)
+        matrix_volume = Volume(surface_loop)
+        PhysicalVolume([matrix_volume], self.matrix.tag)
+
+        for tag, inclusions in inclusions_by_tag.iteritems():
+            inclusion_volumes = []
+            for inclusion in inclusions:
+                inclusion_surfaces = inclusion.surfaces
+                loop = LineLoop(inclusion.lines_top)
+                inclusion_surfaces.append(PlaneSurface(loop))
+                loop = LineLoop(inclusion.lines_bottom)
+                inclusion_surfaces.append(PlaneSurface(loop))
+                surface_loop = SurfaceLoop(inclusion_surfaces)
+                inclusion_volumes.append(Volume(surface_loop))
+            PhysicalVolume(inclusion_volumes, tag)
+
+    def mesh(self):
+        if self.dim_z == 0:
+            self.mesh_2d()
+        else:
+            self.mesh_3d()
 
         result = Value.print_all() + '\n'
         result += Point.print_all() + '\n'
