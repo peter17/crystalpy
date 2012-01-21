@@ -25,12 +25,16 @@ map_simple = [[1, 1],
               [1, 2]]
 size_bulk = Value('size_bulk', 250)
 holes = InclusionType('hole',
-                  radius = 100,
-                  el_size = Value('size_holes', 300),
-                  color = 'lightgrey')
+                      'ellipse',
+                      size_x = 150,
+                      size_y = 100,
+                      el_size = Value('size_holes', 300),
+                      color = 'lightgrey')
 type1 = InclusionType('inclusion',
+                      'ellipse',
                       tag = 'mat2',
-                      radius = 100,
+                      size_x = 150,
+                      size_y = 100,
                       el_size = Value('size_inclusions', 250),
                       color = 'grey')
 simple_2d = \

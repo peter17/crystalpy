@@ -280,6 +280,47 @@ class FullCircle:
         self.lines = [circle_top, circle_bottom]
 
 
+class Ellipse(Line):
+    def __init__(self, pt_begin, pt_center, pt_axis, pt_end):
+        self.pt_begin = pt_begin.id
+        self.pt_center = pt_center.id
+        self.pt_axis = pt_axis.id
+        self.pt_end = pt_end.id
+
+        Line.instances.append(self)
+        self.id = len(Line.instances)
+
+    def __repr__(self):
+        return ("Ellipse(%s) = {%s, %s, %s, %s};\n"
+               % (self.id, self.pt_begin, self.pt_center,
+                  self.pt_axis, self.pt_end))
+
+
+class FullEllipse:
+    def __init__(self,
+                 size_x,
+                 size_y,
+                 pos_x,
+                 pos_y,
+                 pos_z,
+                 el_size):
+
+        self.el_size = el_size
+
+        pt_c = Point(pos_x, pos_y, 0, el_size)
+        pt_l = Point(pos_x - size_x / 2, pos_y, 0, el_size)
+        pt_r = Point(pos_x + size_x / 2, pos_y, 0, el_size)
+        pt_t = Point(pos_x, pos_y + size_y / 2, 0, el_size)
+        pt_b = Point(pos_x, pos_y - size_y / 2, 0, el_size)
+
+        ellipse_1 = Ellipse(pt_l, pt_c, pt_r, pt_t)
+        ellipse_2 = Ellipse(pt_t, pt_c, pt_b, pt_r)
+        ellipse_3 = Ellipse(pt_r, pt_c, pt_l, pt_b)
+        ellipse_4 = Ellipse(pt_b, pt_c, pt_t, pt_l)
+
+        self.lines = [ellipse_1, ellipse_2, ellipse_3, ellipse_4]
+
+
 class SurfaceLoop:
     def __init__(self, pos_lines, neg_lines=[]):
         self.pos_lines_list = ', '.join(["%r" % line.id for line in pos_lines])
@@ -295,7 +336,7 @@ class SurfaceLoop:
                 % (self.id, self.pos_lines_list, self.neg_lines_list))
 
 
-class Cylinder:
+class CircularCylinder:
     def __init__(self,
                  radius,
                  pos_x,
@@ -325,14 +366,73 @@ class Cylinder:
         loop1 = LineLoop([circle_1_bottom, line2], [circle_1_top, line1])
         loop2 = LineLoop([circle_2_bottom, line1], [circle_2_top, line2])
 
+        self.lines_top = [circle_1_top, circle_2_top]
+        self.lines_bottom = [circle_1_bottom, circle_2_bottom]
+
         self.surfaces = []
 
         self.surfaces.append(RuledSurface(loop1))
         self.surfaces.append(RuledSurface(loop2))
 
-        self.lines_top = [circle_1_top, circle_2_top]
-        self.lines_bottom = [circle_1_bottom, circle_2_bottom]
         self.lines = [line1, line2]
+
+
+class EllipticCylinder:
+    def __init__(self,
+                 size_x,
+                 size_y,
+                 pos_x,
+                 pos_y,
+                 dim_z,
+                 el_size):
+
+        self.el_size = el_size
+
+        pt_c_bottom = Point(pos_x, pos_y, 0, el_size)
+        pt_l_bottom = Point(pos_x - size_x / 2, pos_y, 0, el_size)
+        pt_r_bottom = Point(pos_x + size_x / 2, pos_y, 0, el_size)
+        pt_t_bottom = Point(pos_x, pos_y + size_y / 2, 0, el_size)
+        pt_b_bottom = Point(pos_x, pos_y - size_y / 2, 0, el_size)
+
+        pt_c_top = Point(pos_x, pos_y, dim_z, el_size)
+        pt_l_top = Point(pos_x - size_x / 2, pos_y, dim_z, el_size)
+        pt_r_top = Point(pos_x + size_x / 2, pos_y, dim_z, el_size)
+        pt_t_top = Point(pos_x, pos_y + size_y / 2, dim_z, el_size)
+        pt_b_top = Point(pos_x, pos_y - size_y / 2, dim_z, el_size)
+
+        ellipse_1_top = Ellipse(pt_l_top, pt_c_top, pt_r_top, pt_t_top)
+        ellipse_1_bottom = Ellipse(pt_l_bottom, pt_c_bottom, pt_r_bottom, pt_t_bottom)
+
+        ellipse_2_top = Ellipse(pt_t_top, pt_c_top, pt_b_top, pt_r_top)
+        ellipse_2_bottom = Ellipse(pt_t_bottom, pt_c_bottom, pt_b_bottom, pt_r_bottom)
+
+        ellipse_3_top = Ellipse(pt_r_top, pt_c_top, pt_l_top, pt_b_top)
+        ellipse_3_bottom = Ellipse(pt_r_bottom, pt_c_bottom, pt_l_bottom, pt_b_bottom)
+
+        ellipse_4_top = Ellipse(pt_b_top, pt_c_top, pt_t_top, pt_l_top)
+        ellipse_4_bottom = Ellipse(pt_b_bottom, pt_c_bottom, pt_t_bottom, pt_l_bottom)
+
+        line1 = StraightLine(pt_l_bottom, pt_l_top)
+        line2 = StraightLine(pt_t_bottom, pt_t_top)
+        line3 = StraightLine(pt_r_bottom, pt_r_top)
+        line4 = StraightLine(pt_b_bottom, pt_b_top)
+
+        loop1 = LineLoop([ellipse_1_bottom, line2], [ellipse_1_top, line1])
+        loop2 = LineLoop([ellipse_2_bottom, line3], [ellipse_2_top, line2])
+        loop3 = LineLoop([ellipse_3_bottom, line4], [ellipse_3_top, line3])
+        loop4 = LineLoop([ellipse_4_bottom, line1], [ellipse_4_top, line4])
+
+        self.lines_top = [ellipse_1_top, ellipse_2_top, ellipse_3_top, ellipse_4_top]
+        self.lines_bottom = [ellipse_1_bottom, ellipse_2_bottom, ellipse_3_bottom, ellipse_4_bottom]
+
+        self.surfaces = []
+
+        self.surfaces.append(RuledSurface(loop1))
+        self.surfaces.append(RuledSurface(loop2))
+        self.surfaces.append(RuledSurface(loop3))
+        self.surfaces.append(RuledSurface(loop4))
+
+        self.lines = [line1, line2, line3, line4]
 
 
 class Cuboid():
@@ -473,21 +573,32 @@ class Inclusion:
         Inclusion.instances.append(self)
 
     def image(self):
-        return pysvg.shape.circle(self.pos_x,
-                                  self.pos_y,
-                                  self.type.radius,
-                                  stroke='black',
-                                  fill=self.type.color)
+        return pysvg.shape.ellipse(self.pos_x,
+                                   self.pos_y,
+                                   self.type.size_x / 2,
+                                   self.type.size_y / 2,
+                                   stroke='black',
+                                   fill=self.type.color)
 
     def mesh(self):
         if self.dim_z == 0:
-            return FullCircle(self.type.radius,
-                              self.pos_x, self.pos_y, 0,
-                              self.type.el_size)
+            if self.type.size_x == self.type.size_y:
+                return FullCircle(self.type.size_x / 2,
+                                  self.pos_x, self.pos_y, 0,
+                                  self.type.el_size)
+            else:
+                return FullEllipse(self.type.size_x, self.type.size_y,
+                                   self.pos_x, self.pos_y, 0,
+                                   self.type.el_size)
         else:
-            return Cylinder(self.type.radius,
-                              self.pos_x, self.pos_y, self.dim_z,
-                              self.type.el_size)
+            if self.type.size_x == self.type.size_y:
+                return CircularCylinder(self.type.size_x / 2,
+                                        self.pos_x, self.pos_y, self.dim_z,
+                                        self.type.el_size)
+            else:
+                return EllipticCylinder(self.type.size_x, self.type.size_y,
+                                        self.pos_x, self.pos_y, self.dim_z,
+                                        self.type.el_size)
 
 
 class Crystal:
@@ -620,7 +731,9 @@ class Crystal:
 class InclusionType:
     def __init__(self,
                  type,
-                 radius,
+                 shape,
+                 size_x,
+                 size_y,
                  el_size,
                  tag=None,
                  color='lightgrey'):
@@ -629,7 +742,9 @@ class InclusionType:
         @param tag: what to tag in the mesh for those inclusions
         """
         self.type = type
-        self.tag = tag
-        self.radius = radius
+        self.shape = shape
+        self.size_x = size_x
+        self.size_y = size_y
         self.el_size = el_size
+        self.tag = tag
         self.color = color
