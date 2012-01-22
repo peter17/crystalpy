@@ -573,32 +573,54 @@ class Inclusion:
         Inclusion.instances.append(self)
 
     def image(self):
-        return pysvg.shape.ellipse(self.pos_x,
-                                   self.pos_y,
-                                   self.type.size_x / 2,
-                                   self.type.size_y / 2,
-                                   stroke='black',
-                                   fill=self.type.color)
+        if self.type.shape == 'ellipse':
+            return pysvg.shape.ellipse(self.pos_x,
+                                       self.pos_y,
+                                       self.type.dim_x / 2,
+                                       self.type.dim_y / 2,
+                                       stroke='black',
+                                       fill=self.type.color)
+        elif self.type.shape == 'rectangle':
+            return pysvg.shape.rect(self.pos_x - self.type.dim_x / 2,
+                                    self.pos_y - self.type.dim_y / 2,
+                                    self.type.dim_x,
+                                    self.type.dim_y,
+                                    stroke='black',
+                                    fill=self.type.color)
 
     def mesh(self):
         if self.dim_z == 0:
-            if self.type.size_x == self.type.size_y:
-                return FullCircle(self.type.size_x / 2,
-                                  self.pos_x, self.pos_y, 0,
-                                  self.type.el_size)
+            if self.type.shape == 'ellipse':
+                if self.type.dim_x == self.type.dim_y:
+                    return FullCircle(self.type.dim_x / 2,
+                                      self.pos_x, self.pos_y, 0,
+                                      self.type.el_size)
+                else:
+                    return FullEllipse(self.type.dim_x, self.type.dim_y,
+                                       self.pos_x, self.pos_y, 0,
+                                       self.type.el_size)
+            elif self.type.shape == 'rectangle':
+                    return Rectangle(self.type.dim_x, self.type.dim_y,
+                                     self.pos_x, self.pos_y, 0,
+                                     self.type.el_size, [None, None])
             else:
-                return FullEllipse(self.type.size_x, self.type.size_y,
-                                   self.pos_x, self.pos_y, 0,
-                                   self.type.el_size)
+                raise Exception('Wrong inclusion shape')
         else:
-            if self.type.size_x == self.type.size_y:
-                return CircularCylinder(self.type.size_x / 2,
-                                        self.pos_x, self.pos_y, self.dim_z,
-                                        self.type.el_size)
+            if self.type.shape == 'ellipse':
+                if self.type.dim_x == self.type.dim_y:
+                    return CircularCylinder(self.type.dim_x / 2,
+                                            self.pos_x, self.pos_y, self.dim_z,
+                                            self.type.el_size)
+                else:
+                    return EllipticCylinder(self.type.dim_x, self.type.dim_y,
+                                            self.pos_x, self.pos_y, self.dim_z,
+                                            self.type.el_size)
+            elif self.type.shape == 'rectangle':
+                    return Cuboid(self.type.dim_x, self.type.dim_y, self.dim_z,
+                                  self.pos_x, self.pos_y, 0,
+                                  self.type.el_size, [None, None, None])
             else:
-                return EllipticCylinder(self.type.size_x, self.type.size_y,
-                                        self.pos_x, self.pos_y, self.dim_z,
-                                        self.type.el_size)
+                raise Exception('Wrong inclusion shape')
 
 
 class Crystal:
@@ -732,19 +754,20 @@ class InclusionType:
     def __init__(self,
                  type,
                  shape,
-                 size_x,
-                 size_y,
+                 dim_x,
+                 dim_y,
                  el_size,
                  tag=None,
                  color='lightgrey'):
         """
         @param type: 'inclusion' (matter) or 'hole' (void)
+        @param shape: 'ellipse' or 'rectangle'
         @param tag: what to tag in the mesh for those inclusions
         """
         self.type = type
         self.shape = shape
-        self.size_x = size_x
-        self.size_y = size_y
+        self.dim_x = dim_x
+        self.dim_y = dim_y
         self.el_size = el_size
         self.tag = tag
         self.color = color
