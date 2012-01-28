@@ -14,6 +14,8 @@ Several types of inclusions can be defined:
 * circular, elliptic or rectangular
 * inside or outside the host material
 
+Crystalpy supports unit tests with nosetests.
+
 Versions
 ========
 
@@ -23,3 +25,4 @@ Versions
 * v. 2.1: Add support for elliptic inclusions
 * v. 2.2: Add support for rectangular inclusions
 * v. 2.3: Add support for plots
+* v. 2.4: Add unit tests; fix periodicity conditions

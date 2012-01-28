@@ -2,7 +2,7 @@
 """Script for generating crystal meshes and images."""
 
 from __future__ import division
-from generator import Crystal, InclusionType, Value
+from generator import Value, InclusionType, Crystal
 
 __copyright__ = "© 2012 Peter Potrowl <peter017@gmail.com>"
 
@@ -23,13 +23,12 @@ along with this program.  If not, see U{http://www.gnu.org/licenses/}.
 
 map_simple = [[1, 1],
               [1, 2]]
-size_bulk = Value('size_bulk', 25)
 holes = InclusionType(type = 'hole',
                       shape = 'ellipse',
                       dim_x = 150,
                       dim_y = 100,
                       dim_z = 300,
-                      el_size = Value('size_holes', 30),
+                      el_size = 30,
                       color = 'lightgrey')
 type1 = InclusionType(type = 'plot',
                       shape = 'rectangle',
@@ -37,13 +36,13 @@ type1 = InclusionType(type = 'plot',
                       dim_x = 150,
                       dim_y = 100,
                       dim_z = 150,
-                      el_size = Value('size_inclusions', 25),
+                      el_size = 25,
                       color = 'grey')
 simple_3d = \
     {'dim_x': 500,
      'dim_y': 500,
      'dim_z': 300,
-     'periodicity': (False, False, False),
+     'periodicity': (True, True, True),
      'nb_x': 2,
      'nb_y': 2,
      'space_x': 250,
@@ -51,7 +50,7 @@ simple_3d = \
      'pos_x': -125,
      'pos_y': -125,
      'crystal_shape': 'square',
-     'el_size_bulk': size_bulk,
+     'el_size_bulk': 25,
      'bulk_tag': 'mat1',
      'map': map_simple,
      'inclusion_types': [None, type1, holes]}
@@ -61,5 +60,6 @@ file = open('MyCrystal.geo', 'w')
 file.write(my_mesh)
 file.close()
 print 'Geo saved'
-my_crystal.image('MyCrystal.svg')
+my_svg = my_crystal.image()
+my_svg.save('MyCrystal.svg')
 print 'SVG saved'

@@ -113,19 +113,46 @@ class PeriodicLine(Line):
                 % (self.line1_id, self.line2_id))
 
 
-class LineLoop:
-    def __init__(self, pos_lines, neg_lines=[]):
-        self.pos_lines_list = ', '.join(["%r" % line.id for line in pos_lines])
-        self.neg_lines_list = ', '.join(["-%r" % line.id for line in neg_lines])
-        if neg_lines != []:
-            self.neg_lines_list = ', ' + self.neg_lines_list
+class PeriodicSurface(Line):
+    def __init__(self, surface1, pos_lines1, neg_lines1,
+                 surface2, pos_lines2, neg_lines2, permutation):
+        self.surface1_id = surface1.id
+        self.surface2_id = surface2.id
+
+        lines1_list = ["%r" % line.id for line in pos_lines1]
+        lines1_list.extend(["-%r" % line.id for line in neg_lines1])
+        self.lines1_list = ', '.join(lines1_list)
+
+        lines2_list = ["%r" % line.id for line in pos_lines2]
+        lines2_list.extend(["-%r" % line.id for line in neg_lines2])
+        if permutation > 0:
+            for _ in range(permutation):
+                lines2_list.append(lines2_list.pop(0))
+        elif permutation < 0:
+            for _ in range(-permutation):
+                lines2_list.insert(0, lines2_list.pop())
+        self.lines2_list = ', '.join(lines2_list)
 
         Line.instances.append(self)
         self.id = len(Line.instances)
 
     def __repr__(self):
-        return ("Line Loop(%s) = {%s%s};\n"
-                % (self.id, self.pos_lines_list, self.neg_lines_list))
+        return ("Periodic Surface(%d) {%s} = (%s) {%s};\n"
+                % (self.surface1_id, self.lines1_list,
+                   self.surface2_id, self.lines2_list))
+
+
+class LineLoop:
+    def __init__(self, pos_lines, neg_lines=[]):
+        lines_list = ["%r" % line.id for line in pos_lines]
+        lines_list.extend(["-%r" % line.id for line in neg_lines])
+        self.lines_list = ', '.join(lines_list)
+
+        Line.instances.append(self)
+        self.id = len(Line.instances)
+
+    def __repr__(self):
+        return ("Line Loop(%s) = {%s};\n" % (self.id, self.lines_list))
 
 
 class PlaneSurface:
@@ -323,17 +350,15 @@ class FullEllipse:
 
 class SurfaceLoop:
     def __init__(self, pos_lines, neg_lines=[]):
-        self.pos_lines_list = ', '.join(["%r" % line.id for line in pos_lines])
-        self.neg_lines_list = ', '.join(["-%r" % line.id for line in neg_lines])
-        if neg_lines != []:
-            self.neg_lines_list = ', ' + self.neg_lines_list
+        lines_list = ["%r" % line.id for line in pos_lines]
+        lines_list.extend(["-%r" % line.id for line in neg_lines])
+        self.lines_list = ', '.join(lines_list)
 
         Line.instances.append(self)
         self.id = len(Line.instances)
 
     def __repr__(self):
-        return ("Surface Loop(%s) = {%s%s};\n"
-                % (self.id, self.pos_lines_list, self.neg_lines_list))
+        return ("Surface Loop(%s) = {%s};\n" % (self.id, self.lines_list))
 
 
 class CircularCylinder:
@@ -491,12 +516,17 @@ class Cuboid():
         loop4 = LineLoop([line_top_bottom, line_top_right],
                          [line_top_top, line_top_left])
 
+        surface_left = PlaneSurface(loop1)
+        surface_bottom = PlaneSurface(loop2)
+        surface_right = PlaneSurface(loop3)
+        surface_top = PlaneSurface(loop4)
+
         self.surfaces = []
 
-        self.surfaces.append(PlaneSurface(loop1))
-        self.surfaces.append(PlaneSurface(loop2))
-        self.surfaces.append(PlaneSurface(loop3))
-        self.surfaces.append(PlaneSurface(loop4))
+        self.surfaces.append(surface_left)
+        self.surfaces.append(surface_bottom)
+        self.surfaces.append(surface_right)
+        self.surfaces.append(surface_top)
 
         if periodicity[0]:
             PeriodicLine(line_left_bottom, line_right_bottom)
@@ -507,6 +537,12 @@ class Cuboid():
             PhysicalLine(line_right_top, 'plus_x_top')
             PeriodicLine(line_bottom_left, line_bottom_right)
             PeriodicLine(line_top_left, line_top_right)
+            PeriodicSurface(surface_right,
+                            [line_top_right, line_right_top],
+                            [line_bottom_right, line_right_bottom],
+                            surface_left,
+                            [line_left_bottom, line_top_left],
+                            [line_left_top, line_bottom_left], 1)
         if periodicity[1]:
             PeriodicLine(line_bottom_bottom, line_top_bottom)
             PhysicalLine(line_bottom_bottom, 'minus_y_bottom')
@@ -516,6 +552,12 @@ class Cuboid():
             PhysicalLine(line_top_top, 'plus_y_top')
             PeriodicLine(line_bottom_left, line_top_left)
             PeriodicLine(line_bottom_right, line_top_right)
+            PeriodicSurface(surface_top,
+                            [line_top_bottom, line_top_right],
+                            [line_top_top, line_top_left],
+                            surface_bottom,
+                            [line_bottom_right, line_bottom_top],
+                            [line_bottom_left, line_bottom_bottom], -1)
 
 
 class Matrix:
@@ -644,9 +686,18 @@ class Crystal:
                  bulk_tag,
                  map,
                  inclusion_types):
+
+        # Reset the instances lists
+        Value.instances = {}
+        Point.instances = []
+        Line.instances = []
+        PhysicalEntity.instances = []
+        Inclusion.instances = []
+
         self.dim_x = dim_x
         self.dim_y = dim_y
         self.dim_z = dim_z
+        el_size_bulk_value = Value('size_bulk', el_size_bulk)
 
         if map is not None:
             assert len(map) == nb_y, "Wrong map size!"
@@ -654,7 +705,13 @@ class Crystal:
         assert crystal_shape in ['square', 'hexa'], "Wrong crystal type!"
 
         self.matrix = Matrix(dim_x, dim_y, dim_z, 0, 0, 0,
-                             el_size_bulk, periodicity, bulk_tag)
+                             el_size_bulk_value, periodicity, bulk_tag)
+
+        for type in inclusion_types:
+            if type is not None:
+                el_size_name = "size_%s" % len(Value.instances)
+                el_size_value = Value(el_size_name, type.el_size)
+                type.el_size = el_size_value
 
         for i in range(nb_x):
             for j in range(nb_y):
@@ -669,12 +726,12 @@ class Crystal:
                 if type is not None:
                     Inclusion(type, x, y, dim_z)
 
-    def image(self, filename):
+    def image(self):
         mysvg = pysvg.structure.svg("My periodic structure")
         mysvg.addElement(self.matrix.image())
         for inclusion in Inclusion.instances:
             mysvg.addElement(inclusion.image())
-        mysvg.save(filename)
+        return mysvg
 
     def mesh_2d(self):
         inclusions_lines_all = []
@@ -780,6 +837,7 @@ class InclusionType:
         @param shape: 'ellipse' or 'rectangle'
         @param tag: what to tag in the mesh for those inclusions
         """
+
         self.type = type
         self.shape = shape
         self.dim_x = dim_x
