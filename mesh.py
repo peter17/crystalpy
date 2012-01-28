@@ -23,21 +23,23 @@ along with this program.  If not, see U{http://www.gnu.org/licenses/}.
 
 map_simple = [[1, 1],
               [1, 2]]
-size_bulk = Value('size_bulk', 250)
-holes = InclusionType('hole',
-                      'ellipse',
+size_bulk = Value('size_bulk', 25)
+holes = InclusionType(type = 'hole',
+                      shape = 'ellipse',
                       dim_x = 150,
                       dim_y = 100,
-                      el_size = Value('size_holes', 300),
+                      dim_z = 300,
+                      el_size = Value('size_holes', 30),
                       color = 'lightgrey')
-type1 = InclusionType('inclusion',
-                      'rectangle',
+type1 = InclusionType(type = 'plot',
+                      shape = 'rectangle',
                       tag = 'mat2',
                       dim_x = 150,
                       dim_y = 100,
-                      el_size = Value('size_inclusions', 250),
+                      dim_z = 150,
+                      el_size = Value('size_inclusions', 25),
                       color = 'grey')
-simple_2d = \
+simple_3d = \
     {'dim_x': 500,
      'dim_y': 500,
      'dim_z': 300,
@@ -51,10 +53,9 @@ simple_2d = \
      'crystal_shape': 'square',
      'el_size_bulk': size_bulk,
      'bulk_tag': 'mat1',
-     'inclusion_tag': 'mat2',
      'map': map_simple,
      'inclusion_types': [None, type1, holes]}
-my_crystal = Crystal(**simple_2d)
+my_crystal = Crystal(**simple_3d)
 my_mesh = my_crystal.mesh()
 file = open('MyCrystal.geo', 'w')
 file.write(my_mesh)

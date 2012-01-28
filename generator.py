@@ -606,17 +606,21 @@ class Inclusion:
             else:
                 raise Exception('Wrong inclusion shape')
         else:
+            if self.type.type == 'plot':
+                dim_z = -self.type.dim_z
+            else:
+                dim_z = self.dim_z
             if self.type.shape == 'ellipse':
                 if self.type.dim_x == self.type.dim_y:
                     return CircularCylinder(self.type.dim_x / 2,
-                                            self.pos_x, self.pos_y, self.dim_z,
+                                            self.pos_x, self.pos_y, dim_z,
                                             self.type.el_size)
                 else:
                     return EllipticCylinder(self.type.dim_x, self.type.dim_y,
-                                            self.pos_x, self.pos_y, self.dim_z,
+                                            self.pos_x, self.pos_y, dim_z,
                                             self.type.el_size)
             elif self.type.shape == 'rectangle':
-                    return Cuboid(self.type.dim_x, self.type.dim_y, self.dim_z,
+                    return Cuboid(self.type.dim_x, self.type.dim_y, dim_z,
                                   self.pos_x, self.pos_y, 0,
                                   self.type.el_size, [None, None, None])
             else:
@@ -638,7 +642,6 @@ class Crystal:
                  crystal_shape,  # square or hexa
                  el_size_bulk,
                  bulk_tag,
-                 inclusion_tag,
                  map,
                  inclusion_types):
         self.dim_x = dim_x
@@ -678,8 +681,8 @@ class Crystal:
         inclusions_lines_by_tag = {}
 
         for inclusion in Inclusion.instances:
-            for line in inclusion.mesh().lines:
-                inclusions_lines_all.append(line)
+            inclusion_mesh = inclusion.mesh()
+            inclusions_lines_all.extend(inclusion_mesh.lines)
             if inclusion.type.type != 'hole':
                 if inclusion.type.tag not in inclusions_lines_by_tag.keys():
                     inclusions_lines_by_tag[inclusion.type.tag] = []
@@ -700,19 +703,39 @@ class Crystal:
         inclusions_lines_all_top = []
         inclusions_lines_all_bottom = []
         inclusions_by_tag = {}
-        inclusion_surfaces = []
+        inclusions_surfaces = []
+        plot_surfaces_bottom = []
 
         for inclusion in Inclusion.instances:
             inclusion_mesh = inclusion.mesh()
-            for line in inclusion_mesh.lines_top:
-                inclusions_lines_all_top.append(line)
-            for line in inclusion_mesh.lines_bottom:
-                inclusions_lines_all_bottom.append(line)
+            inclusion_mesh.type = inclusion.type.type
+            if inclusion.type.type != 'plot':
+                inclusions_lines_all_top.extend(inclusion_mesh.lines_top)
+            inclusions_lines_all_bottom.extend(inclusion_mesh.lines_bottom)
             if inclusion.type.type != 'hole':
                 if inclusion.type.tag not in inclusions_by_tag.keys():
                     inclusions_by_tag[inclusion.type.tag] = []
                 inclusions_by_tag[inclusion.type.tag].append(inclusion_mesh)
-            inclusion_surfaces.extend(inclusion_mesh.surfaces)
+            if inclusion.type.type != 'plot':
+                inclusions_surfaces.extend(inclusion_mesh.surfaces)
+
+        for tag, inclusions in inclusions_by_tag.iteritems():
+            inclusion_volumes = []
+            for inclusion in inclusions:
+                inclusion_surfaces = inclusion.surfaces
+
+                loop_top = LineLoop(inclusion.lines_top)
+                loop_bottom = LineLoop(inclusion.lines_bottom)
+                surface_top = PlaneSurface(loop_top)
+                surface_bottom = PlaneSurface(loop_bottom)
+                inclusion_surfaces.append(surface_top)
+                inclusion_surfaces.append(surface_bottom)
+                if inclusion.type == 'plot':
+                    plot_surfaces_bottom.append(surface_bottom)
+
+                surface_loop = SurfaceLoop(inclusion_surfaces)
+                inclusion_volumes.append(Volume(surface_loop))
+            PhysicalVolume(inclusion_volumes, tag)
 
         matrix_mesh = self.matrix.mesh()
         loop_top = LineLoop(matrix_mesh.lines_top, inclusions_lines_all_top)
@@ -721,21 +744,10 @@ class Crystal:
         surface_bottom = PlaneSurface(loop_bottom)
         matrix_mesh.surfaces.append(surface_top)
         matrix_mesh.surfaces.append(surface_bottom)
-        surface_loop = SurfaceLoop(matrix_mesh.surfaces, inclusion_surfaces)
+        matrix_mesh.surfaces.extend(plot_surfaces_bottom)
+        surface_loop = SurfaceLoop(matrix_mesh.surfaces, inclusions_surfaces)
         matrix_volume = Volume(surface_loop)
         PhysicalVolume([matrix_volume], self.matrix.tag)
-
-        for tag, inclusions in inclusions_by_tag.iteritems():
-            inclusion_volumes = []
-            for inclusion in inclusions:
-                inclusion_surfaces = inclusion.surfaces
-                loop = LineLoop(inclusion.lines_top)
-                inclusion_surfaces.append(PlaneSurface(loop))
-                loop = LineLoop(inclusion.lines_bottom)
-                inclusion_surfaces.append(PlaneSurface(loop))
-                surface_loop = SurfaceLoop(inclusion_surfaces)
-                inclusion_volumes.append(Volume(surface_loop))
-            PhysicalVolume(inclusion_volumes, tag)
 
     def mesh(self):
         if self.dim_z == 0:
@@ -756,11 +768,15 @@ class InclusionType:
                  shape,
                  dim_x,
                  dim_y,
+                 dim_z,
                  el_size,
                  tag=None,
                  color='lightgrey'):
         """
-        @param type: 'inclusion' (matter) or 'hole' (void)
+        @param type:
+            'inclusion' (matter inside the matrix)
+            'hole' (void inside the matrix)
+            'plot' (matter, outside the matrix)
         @param shape: 'ellipse' or 'rectangle'
         @param tag: what to tag in the mesh for those inclusions
         """
@@ -768,6 +784,7 @@ class InclusionType:
         self.shape = shape
         self.dim_x = dim_x
         self.dim_y = dim_y
+        self.dim_z = dim_z
         self.el_size = el_size
         self.tag = tag
         self.color = color
