@@ -6,7 +6,10 @@ Crystalpy is a Python program which can generate several kinds of periodic cryst
 * 2D or 3D
 * rectangular or triangular (hexagonal) crystals
 
-It can also generate 2D SVG representations of those geometries.
+It can also:
+
+* generate 2D SVG representations of those geometries
+* define physical points in the meshes
 
 Several types of inclusions can be defined:
 
@@ -26,3 +29,4 @@ Versions
 * v. 2.2: Add support for rectangular inclusions
 * v. 2.3: Add support for plots
 * v. 2.4: Add unit tests; fix periodicity conditions
+* v. 2.5: Add support for physical points; fix 2D crystal generation

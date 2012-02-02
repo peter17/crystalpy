@@ -203,6 +203,18 @@ class PhysicalEntity:
     print_all = staticmethod(print_all)
 
 
+class PhysicalPoint:
+    def __init__(self, points, name):
+        self.points = ', '.join([format(point.id) for point in points])
+        self.name = name
+
+        PhysicalEntity.instances.append(self)
+
+    def __repr__(self):
+        return ('Physical Point("%s") = {%s};\n'
+                % (self.name, self.points))
+
+
 class PhysicalLine:
     def __init__(self, line, name):
         self.line_id = line.id
@@ -671,6 +683,7 @@ class Inclusion:
 
 class Crystal:
     def __init__(self,
+                 name,
                  dim_x,
                  dim_y,
                  dim_z,
@@ -684,8 +697,9 @@ class Crystal:
                  crystal_shape,  # square or hexa
                  el_size_bulk,
                  bulk_tag,
-                 map,
-                 inclusion_types):
+                 inclusion_map,
+                 inclusion_types,
+                 physical_point_map):
 
         # Reset the instances lists
         Value.instances = {}
@@ -694,14 +708,15 @@ class Crystal:
         PhysicalEntity.instances = []
         Inclusion.instances = []
 
+        self.name = name
         self.dim_x = dim_x
         self.dim_y = dim_y
         self.dim_z = dim_z
         el_size_bulk_value = Value('size_bulk', el_size_bulk)
 
-        if map is not None:
-            assert len(map) == nb_y, "Wrong map size!"
-            assert len(map[0]) == nb_x, "Wrong map size!"
+        if inclusion_map is not None:
+            assert len(inclusion_map) == nb_y, "Wrong map size!"
+            assert len(inclusion_map[0]) == nb_x, "Wrong map size!"
         assert crystal_shape in ['square', 'hexa'], "Wrong crystal type!"
 
         self.matrix = Matrix(dim_x, dim_y, dim_z, 0, 0, 0,
@@ -721,13 +736,25 @@ class Crystal:
                 else:
                     x = pos_x + i * space_x
                     y = pos_y + j * space_y
-                type_id = 0 if map is None else map[j][i]
+                type_id = 0 if inclusion_map is None else inclusion_map[j][i]
                 type = inclusion_types[type_id]
                 if type is not None:
                     Inclusion(type, x, y, dim_z)
 
+        for physical_point_type in physical_point_map:
+            point_type = physical_point_type[0]
+            point_list = physical_point_type[1]
+            points = []
+            for point in point_list:
+                my_point = Point(point[0],
+                                 point[1],
+                                 point[2],
+                                 el_size_bulk)
+                points.append(my_point)
+            PhysicalPoint(points, point_type)
+
     def image(self):
-        mysvg = pysvg.structure.svg("My periodic structure")
+        mysvg = pysvg.structure.svg(self.name)
         mysvg.addElement(self.matrix.image())
         for inclusion in Inclusion.instances:
             mysvg.addElement(inclusion.image())
@@ -743,7 +770,7 @@ class Crystal:
             if inclusion.type.type != 'hole':
                 if inclusion.type.tag not in inclusions_lines_by_tag.keys():
                     inclusions_lines_by_tag[inclusion.type.tag] = []
-                inclusions_lines_by_tag[inclusion.type.tag].append(inclusion.mesh().lines)
+                inclusions_lines_by_tag[inclusion.type.tag].append(inclusion_mesh.lines)
 
         loop = LineLoop(self.matrix.mesh().lines, inclusions_lines_all)
         surface = PlaneSurface(loop)
@@ -812,7 +839,8 @@ class Crystal:
         else:
             self.mesh_3d()
 
-        result = Value.print_all() + '\n'
+        result = "//%s, created with crystalpy\n" % self.name
+        result += Value.print_all() + '\n'
         result += Point.print_all() + '\n'
         result += Line.print_all() + '\n'
         result += PhysicalEntity.print_all()

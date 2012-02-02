@@ -2,7 +2,7 @@
 """Script for generating crystal meshes and images."""
 
 from __future__ import division
-from generator import Value, InclusionType, Crystal
+from generator import Crystal, InclusionType
 
 __copyright__ = "© 2012 Peter Potrowl <peter017@gmail.com>"
 
@@ -21,6 +21,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see U{http://www.gnu.org/licenses/}.
 """
 
+name = "MyCrystal"
 map_simple = [[1, 1],
               [1, 2]]
 holes = InclusionType(type = 'hole',
@@ -38,8 +39,12 @@ type1 = InclusionType(type = 'plot',
                       dim_z = 150,
                       el_size = 25,
                       color = 'grey')
+physical_point_map = \
+    [('PointReceiver', [(0, 0, 0), (150, 0, 0)]),
+     ('PointSource', [(0, 0, 150)])]
 simple_3d = \
-    {'dim_x': 500,
+    {'name': name,
+     'dim_x': 500,
      'dim_y': 500,
      'dim_z': 300,
      'periodicity': (True, True, True),
@@ -52,14 +57,15 @@ simple_3d = \
      'crystal_shape': 'square',
      'el_size_bulk': 25,
      'bulk_tag': 'mat1',
-     'map': map_simple,
-     'inclusion_types': [None, type1, holes]}
+     'inclusion_map': map_simple,
+     'inclusion_types': [None, type1, holes],
+     'physical_point_map': physical_point_map}
 my_crystal = Crystal(**simple_3d)
 my_mesh = my_crystal.mesh()
-file = open('MyCrystal.geo', 'w')
+file = open('%s.geo' % name, 'w')
 file.write(my_mesh)
 file.close()
 print 'Geo saved'
 my_svg = my_crystal.image()
-my_svg.save('MyCrystal.svg')
+my_svg.save('%s.svg' % name)
 print 'SVG saved'

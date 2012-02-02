@@ -24,7 +24,8 @@ class Mesh2DTests(GeneratorTestCase):
                               el_size = 25,
                               color = 'grey')
         simple_2d = \
-            {'dim_x': 500,
+            {'name': 'Image2D',
+             'dim_x': 500,
              'dim_y': 500,
              'dim_z': 0,
              'periodicity': (False, False, False),
@@ -37,9 +38,10 @@ class Mesh2DTests(GeneratorTestCase):
              'crystal_shape': 'square',
              'el_size_bulk': 25,
              'bulk_tag': 'mat1',
-             'map': map_simple,
-             'inclusion_types': [None, type1, holes]}
-        expected = """<svg xmlns="http://www.w3.org/2000/svg" version="1.1" x="My periodic structure" xmlns:xlink="http://www.w3.org/1999/xlink"  >
+             'inclusion_map': map_simple,
+             'inclusion_types': [None, type1, holes],
+             'physical_point_map': []}
+        expected = """<svg xmlns="http://www.w3.org/2000/svg" version="1.1" x="Image2D" xmlns:xlink="http://www.w3.org/1999/xlink"  >
 <rect height="500" width="500" stroke="black" y="-250.0" x="-250.0" fill="white"  />
 <rect height="100" width="150" stroke="black" y="-175.0" x="-200.0" fill="grey"  />
 <rect height="100" width="150" stroke="black" y="75.0" x="-200.0" fill="grey"  />
