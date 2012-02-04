@@ -40,13 +40,14 @@ class Mesh2DTests(GeneratorTestCase):
              'bulk_tag': 'mat1',
              'inclusion_map': map_simple,
              'inclusion_types': [None, type1, holes],
-             'physical_point_map': []}
+             'physical_point_map': [],
+             'physical_line_map': []}
         expected = """<svg xmlns="http://www.w3.org/2000/svg" version="1.1" x="Image2D" xmlns:xlink="http://www.w3.org/1999/xlink"  >
-<rect height="500" width="500" stroke="black" y="-250.0" x="-250.0" fill="white"  />
-<rect height="100" width="150" stroke="black" y="-175.0" x="-200.0" fill="grey"  />
-<rect height="100" width="150" stroke="black" y="75.0" x="-200.0" fill="grey"  />
-<rect height="100" width="150" stroke="black" y="-175.0" x="50.0" fill="grey"  />
-<ellipse rx="75.0" ry="50.0" stroke="black" cy="125" cx="125" fill="lightgrey"  />
+<rect style="stroke-width:5.0; " height="500" width="500" stroke="black" y="-250.0" x="-250.0" fill="white"  />
+<rect style="stroke-width:1.5; " height="100" width="150" stroke="black" y="-175.0" x="-200.0" fill="grey"  />
+<rect style="stroke-width:1.5; " height="100" width="150" stroke="black" y="75.0" x="-200.0" fill="grey"  />
+<rect style="stroke-width:1.5; " height="100" width="150" stroke="black" y="-175.0" x="50.0" fill="grey"  />
+<ellipse style="stroke-width:1.5; " rx="75.0" ry="50.0" stroke="black" cy="125" cx="125" fill="lightgrey"  />
 </svg>
 """
         self.image_equal_string(simple_2d, expected)

@@ -3,6 +3,7 @@
 
 from __future__ import division
 import pysvg
+from pysvg.builders import *
 from pysvg.core import *
 from pysvg.structure import *
 from pysvg.shape import *
@@ -216,15 +217,15 @@ class PhysicalPoint:
 
 
 class PhysicalLine:
-    def __init__(self, line, name):
-        self.line_id = line.id
+    def __init__(self, lines, name):
+        self.lines = ', '.join([format(line.id) for line in lines])
         self.name = name
 
         PhysicalEntity.instances.append(self)
 
     def __repr__(self):
         return ('Physical Line("%s") = {%s};\n'
-                % (self.name, self.line_id))
+                % (self.name, self.lines))
 
 
 class PhysicalSurface:
@@ -249,6 +250,18 @@ class PhysicalVolume:
     def __repr__(self):
         return ('Physical Volume("%s") = {%s};\n'
                 % (self.name, self.volumes))
+
+
+class LineInSurface:
+    def __init__(self, line, surface):
+        self.line = line
+        self.surface = surface
+
+        PhysicalEntity.instances.append(self)
+
+    def __repr__(self):
+        return ('Line{%s} In Surface {%s};\n'
+                % (self.line.id, self.surface))
 
 
 class Rectangle():
@@ -277,12 +290,12 @@ class Rectangle():
 
         if periodicity[0]:
             PeriodicLine(line_left, line_right)
-            PhysicalLine(line_left, 'minus_x')
-            PhysicalLine(line_right, 'plus_x')
+            PhysicalLine([line_left], 'minus_x')
+            PhysicalLine([line_right], 'plus_x')
         if periodicity[1]:
             PeriodicLine(line_bottom, line_top)
-            PhysicalLine(line_bottom, 'minus_y')
-            PhysicalLine(line_top, 'plus_y')
+            PhysicalLine([line_bottom], 'minus_y')
+            PhysicalLine([line_top], 'plus_y')
 
 
 class Circle(Line):
@@ -542,13 +555,15 @@ class Cuboid():
 
         if periodicity[0]:
             PeriodicLine(line_left_bottom, line_right_bottom)
-            PhysicalLine(line_left_bottom, 'minus_x_bottom')
-            PhysicalLine(line_right_bottom, 'plus_x_bottom')
+            PhysicalLine([line_left_bottom], 'minus_x_bottom')
+            PhysicalLine([line_right_bottom], 'plus_x_bottom')
             PeriodicLine(line_left_top, line_right_top)
-            PhysicalLine(line_left_top, 'minus_x_top')
-            PhysicalLine(line_right_top, 'plus_x_top')
+            PhysicalLine([line_left_top], 'minus_x_top')
+            PhysicalLine([line_right_top], 'plus_x_top')
             PeriodicLine(line_bottom_left, line_bottom_right)
             PeriodicLine(line_top_left, line_top_right)
+            PhysicalSurface([surface_right], 'surface_right')
+            PhysicalSurface([surface_left], 'surface_left')
             PeriodicSurface(surface_right,
                             [line_top_right, line_right_top],
                             [line_bottom_right, line_right_bottom],
@@ -557,13 +572,15 @@ class Cuboid():
                             [line_left_top, line_bottom_left], 1)
         if periodicity[1]:
             PeriodicLine(line_bottom_bottom, line_top_bottom)
-            PhysicalLine(line_bottom_bottom, 'minus_y_bottom')
-            PhysicalLine(line_top_bottom, 'plus_y_bottom')
+            PhysicalLine([line_bottom_bottom], 'minus_y_bottom')
+            PhysicalLine([line_top_bottom], 'plus_y_bottom')
             PeriodicLine(line_bottom_top, line_top_top)
-            PhysicalLine(line_bottom_top, 'minus_y_top')
-            PhysicalLine(line_top_top, 'plus_y_top')
+            PhysicalLine([line_bottom_top], 'minus_y_top')
+            PhysicalLine([line_top_top], 'plus_y_top')
             PeriodicLine(line_bottom_left, line_top_left)
             PeriodicLine(line_bottom_right, line_top_right)
+            PhysicalSurface([surface_top], 'surface_top')
+            PhysicalSurface([surface_bottom], 'surface_bottom')
             PeriodicSurface(surface_top,
                             [line_top_bottom, line_top_right],
                             [line_top_top, line_top_left],
@@ -594,12 +611,15 @@ class Matrix:
         self.tag = tag
 
     def image(self):
+        style_line = StyleBuilder()
+        style_line.setStrokeWidth(self.dim_x / 100)
         return pysvg.shape.rect(self.pos_x - self.dim_x / 2,
                                 self.pos_y - self.dim_y / 2,
                                 self.dim_x,
                                 self.dim_y,
                                 stroke='black',
-                                fill='white')
+                                fill='white',
+                                style=style_line.getStyle())
 
     def mesh(self):
         if self.dim_z == 0:
@@ -627,20 +647,24 @@ class Inclusion:
         Inclusion.instances.append(self)
 
     def image(self):
+        style_line = StyleBuilder()
+        style_line.setStrokeWidth(self.type.dim_x / 100)
         if self.type.shape == 'ellipse':
             return pysvg.shape.ellipse(self.pos_x,
                                        self.pos_y,
                                        self.type.dim_x / 2,
                                        self.type.dim_y / 2,
                                        stroke='black',
-                                       fill=self.type.color)
+                                       fill=self.type.color,
+                                       style=style_line.getStyle())
         elif self.type.shape == 'rectangle':
             return pysvg.shape.rect(self.pos_x - self.type.dim_x / 2,
                                     self.pos_y - self.type.dim_y / 2,
                                     self.type.dim_x,
                                     self.type.dim_y,
                                     stroke='black',
-                                    fill=self.type.color)
+                                    fill=self.type.color,
+                                    style=style_line.getStyle())
 
     def mesh(self):
         if self.dim_z == 0:
@@ -699,7 +723,8 @@ class Crystal:
                  bulk_tag,
                  inclusion_map,
                  inclusion_types,
-                 physical_point_map):
+                 physical_point_map,
+                 physical_line_map):
 
         # Reset the instances lists
         Value.instances = {}
@@ -713,6 +738,7 @@ class Crystal:
         self.dim_y = dim_y
         self.dim_z = dim_z
         el_size_bulk_value = Value('size_bulk', el_size_bulk)
+        self.physical_lines = []
 
         if inclusion_map is not None:
             assert len(inclusion_map) == nb_y, "Wrong map size!"
@@ -753,6 +779,29 @@ class Crystal:
                 points.append(my_point)
             PhysicalPoint(points, point_type)
 
+        for physical_line_type in physical_line_map:
+            line_type = physical_line_type[0]
+            point_list = physical_line_type[1]
+
+            assert len(point_list) % 2 == 0, 'Need an even number of points!'
+            lines = []
+            while point_list:
+                point1 = point_list.pop()
+                point2 = point_list.pop()
+                pt1 = Point(point1[0],
+                            point1[1],
+                            point1[2],
+                            el_size_bulk)
+                pt2 = Point(point2[0],
+                            point2[1],
+                            point2[2],
+                            el_size_bulk)
+                my_line = StraightLine(pt1, pt2)
+                lines.append(my_line)
+                if point1[2] == point2[2]:
+                    self.physical_lines.append((my_line, point1[2]))
+            PhysicalLine(lines, line_type)
+
     def image(self):
         mysvg = pysvg.structure.svg(self.name)
         mysvg.addElement(self.matrix.image())
@@ -775,6 +824,9 @@ class Crystal:
         loop = LineLoop(self.matrix.mesh().lines, inclusions_lines_all)
         surface = PlaneSurface(loop)
         PhysicalSurface([surface], self.matrix.tag)
+        for straight_line, line_z in self.physical_lines:
+            if line_z == 0:
+                LineInSurface(straight_line, surface.id)
 
         for tag, inclusion_lines in inclusions_lines_by_tag.iteritems():
             inclusion_surfaces = []
@@ -826,6 +878,11 @@ class Crystal:
         loop_bottom = LineLoop(matrix_mesh.lines_bottom, inclusions_lines_all_bottom)
         surface_top = PlaneSurface(loop_top)
         surface_bottom = PlaneSurface(loop_bottom)
+        for straight_line, line_z in self.physical_lines:
+            if line_z == 0:
+                LineInSurface(straight_line, surface_bottom.id)
+            if line_z == self.dim_z:
+                LineInSurface(straight_line, surface_top.id)
         matrix_mesh.surfaces.append(surface_top)
         matrix_mesh.surfaces.append(surface_bottom)
         matrix_mesh.surfaces.extend(plot_surfaces_bottom)

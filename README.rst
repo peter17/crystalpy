@@ -30,3 +30,4 @@ Versions
 * v. 2.3: Add support for plots
 * v. 2.4: Add unit tests; fix periodicity conditions
 * v. 2.5: Add support for physical points; fix 2D crystal generation
+* v. 2.6: Add support for physical lines; fix 2D image generation

@@ -42,6 +42,8 @@ type1 = InclusionType(type = 'plot',
 physical_point_map = \
     [('PointReceiver', [(0, 0, 0), (150, 0, 0)]),
      ('PointSource', [(0, 0, 150)])]
+physical_line_map = \
+    [('LineReceiver', [(-150, -20, 300), (-150, 20, 300)])]
 simple_3d = \
     {'name': name,
      'dim_x': 500,
@@ -59,7 +61,8 @@ simple_3d = \
      'bulk_tag': 'mat1',
      'inclusion_map': map_simple,
      'inclusion_types': [None, type1, holes],
-     'physical_point_map': physical_point_map}
+     'physical_point_map': physical_point_map,
+     'physical_line_map': physical_line_map}
 my_crystal = Crystal(**simple_3d)
 my_mesh = my_crystal.mesh()
 file = open('%s.geo' % name, 'w')
