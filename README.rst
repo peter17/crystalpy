@@ -19,6 +19,12 @@ Several types of inclusions can be defined:
 
 Crystalpy supports unit tests with nosetests.
 
+Usage
+=====
+
+* Define the geometry of your crystal in mesh.py
+* Run `python mesh.py`
+
 Versions
 ========
 
@@ -31,3 +37,4 @@ Versions
 * v. 2.4: Add unit tests; fix periodicity conditions
 * v. 2.5: Add support for physical points; fix 2D crystal generation
 * v. 2.6: Add support for physical lines; fix 2D image generation
+* v. 2.7: Add usage explanations; fix crystal position

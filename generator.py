@@ -3,7 +3,7 @@
 
 from __future__ import division
 import pysvg
-from pysvg.builders import *
+from pysvg.builders import StyleBuilder
 from pysvg.core import *
 from pysvg.structure import *
 from pysvg.shape import *
@@ -754,14 +754,19 @@ class Crystal:
                 el_size_value = Value(el_size_name, type.el_size)
                 type.el_size = el_size_value
 
+        dim_crystal_x = (nb_x - 1) * space_x
+        dim_crystal_y = (nb_y - 1) * space_y
+        crystal_base_x = pos_x - dim_crystal_x / 2
+        crystal_base_y = pos_y - dim_crystal_y / 2
+
         for i in range(nb_x):
             for j in range(nb_y):
                 if crystal_shape == 'hexa' and j % 2 == 1:
-                    x = pos_x + i * space_x + space_x / 2
-                    y = pos_y + j * space_y
+                    x = crystal_base_x + i * space_x + space_x / 2
+                    y = crystal_base_y + j * space_y
                 else:
-                    x = pos_x + i * space_x
-                    y = pos_y + j * space_y
+                    x = crystal_base_x + i * space_x
+                    y = crystal_base_y + j * space_y
                 type_id = 0 if inclusion_map is None else inclusion_map[j][i]
                 type = inclusion_types[type_id]
                 if type is not None:

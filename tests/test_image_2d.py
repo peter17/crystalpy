@@ -33,8 +33,8 @@ class Mesh2DTests(GeneratorTestCase):
              'nb_y': 2,
              'space_x': 250,
              'space_y': 250,
-             'pos_x': -125,
-             'pos_y': -125,
+             'pos_x': 0,
+             'pos_y': 0,
              'crystal_shape': 'square',
              'el_size_bulk': 25,
              'bulk_tag': 'mat1',
@@ -47,7 +47,7 @@ class Mesh2DTests(GeneratorTestCase):
 <rect style="stroke-width:1.5; " height="100" width="150" stroke="black" y="-175.0" x="-200.0" fill="grey"  />
 <rect style="stroke-width:1.5; " height="100" width="150" stroke="black" y="75.0" x="-200.0" fill="grey"  />
 <rect style="stroke-width:1.5; " height="100" width="150" stroke="black" y="-175.0" x="50.0" fill="grey"  />
-<ellipse style="stroke-width:1.5; " rx="75.0" ry="50.0" stroke="black" cy="125" cx="125" fill="lightgrey"  />
+<ellipse style="stroke-width:1.5; " rx="75.0" ry="50.0" stroke="black" cy="125.0" cx="125.0" fill="lightgrey"  />
 </svg>
 """
         self.image_equal_string(simple_2d, expected)

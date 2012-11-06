@@ -38,8 +38,8 @@ class Mesh3DTests(GeneratorTestCase):
              'nb_y': 2,
              'space_x': 250,
              'space_y': 250,
-             'pos_x': -125,
-             'pos_y': -125,
+             'pos_x': 0,
+             'pos_y': 0,
              'crystal_shape': 'square',
              'el_size_bulk': 25,
              'bulk_tag': 'mat1',
@@ -81,16 +81,16 @@ Point(26) = {50.0, -75.0, -150, size_1};
 Point(27) = {50.0, -175.0, -150, size_1};
 Point(28) = {200.0, -75.0, -150, size_1};
 Point(29) = {200.0, -175.0, -150, size_1};
-Point(30) = {125, 125, 0, size_2};
-Point(31) = {50.0, 125, 0, size_2};
-Point(32) = {200.0, 125, 0, size_2};
-Point(33) = {125, 175.0, 0, size_2};
-Point(34) = {125, 75.0, 0, size_2};
-Point(35) = {125, 125, 300, size_2};
-Point(36) = {50.0, 125, 300, size_2};
-Point(37) = {200.0, 125, 300, size_2};
-Point(38) = {125, 175.0, 300, size_2};
-Point(39) = {125, 75.0, 300, size_2};
+Point(30) = {125.0, 125.0, 0, size_2};
+Point(31) = {50.0, 125.0, 0, size_2};
+Point(32) = {200.0, 125.0, 0, size_2};
+Point(33) = {125.0, 175.0, 0, size_2};
+Point(34) = {125.0, 75.0, 0, size_2};
+Point(35) = {125.0, 125.0, 300, size_2};
+Point(36) = {50.0, 125.0, 300, size_2};
+Point(37) = {200.0, 125.0, 300, size_2};
+Point(38) = {125.0, 175.0, 300, size_2};
+Point(39) = {125.0, 75.0, 300, size_2};
 Point(40) = {-250.0, 250.0, 0, size_bulk};
 Point(41) = {-250.0, -250.0, 0, size_bulk};
 Point(42) = {250.0, 250.0, 0, size_bulk};

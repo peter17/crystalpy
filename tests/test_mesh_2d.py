@@ -39,8 +39,8 @@ class Mesh2DTests(GeneratorTestCase):
              'nb_y': 2,
              'space_x': 250,
              'space_y': 250,
-             'pos_x': -125,
-             'pos_y': -125,
+             'pos_x': 0,
+             'pos_y': 0,
              'crystal_shape': 'square',
              'el_size_bulk': 25,
              'bulk_tag': 'mat1',
@@ -72,11 +72,11 @@ Point(16) = {50.0, -75.0, 0, size_1};
 Point(17) = {50.0, -175.0, 0, size_1};
 Point(18) = {200.0, -75.0, 0, size_1};
 Point(19) = {200.0, -175.0, 0, size_1};
-Point(20) = {125, 125, 0, size_2};
-Point(21) = {50.0, 125, 0, size_2};
-Point(22) = {200.0, 125, 0, size_2};
-Point(23) = {125, 175.0, 0, size_2};
-Point(24) = {125, 75.0, 0, size_2};
+Point(20) = {125.0, 125.0, 0, size_2};
+Point(21) = {50.0, 125.0, 0, size_2};
+Point(22) = {200.0, 125.0, 0, size_2};
+Point(23) = {125.0, 175.0, 0, size_2};
+Point(24) = {125.0, 75.0, 0, size_2};
 Point(25) = {-250.0, 250.0, 0, size_bulk};
 Point(26) = {-250.0, -250.0, 0, size_bulk};
 Point(27) = {250.0, 250.0, 0, size_bulk};
